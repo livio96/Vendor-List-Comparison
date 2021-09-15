@@ -9,3 +9,6 @@ pandas
 openpyxl
 xlrd
 pandas
+
+
+<br>Demo: https://replit.com/@LivioBeqiri/Vendor-List-Comparison#main.py</br>
