@@ -1,0 +1,9 @@
+2021-09-15 10:11:48,140 : Start.....
+2021-09-15 10:11:48,141 : Reading config file sheet Sheet1 of config.xlsx
+2021-09-15 10:11:48,952 : 1 row(s) found in config.xlsx, [(Cisco Refresh, True, B, ['D'])]
+2021-09-15 10:11:48,952 : Processing the Cisco Refresh having lookup column B and columns to be checked is/are ['D']
+2021-09-15 10:11:48,952 : Reading old Cisco Refresh data file sheet Sheet1 at ./Cisco Refresh/Cisco Refresh - old.xls
+2021-09-15 10:11:49,153 : Reading Cisco Refresh - new data file sheet Sheet1 at ./Cisco Refresh/Cisco Refresh - new.xls
+2021-09-15 10:11:49,403 : Postfix column is not empty, therefore adding an extra column for an external ID.
+2021-09-15 10:11:49,404 : Saving CSV file for Cisco Refresh having 7 rows at ./Results/Cisco Refresh - results.csv 
+2021-09-15 10:11:50,248 : End.....
