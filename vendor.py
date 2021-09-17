@@ -1,4 +1,4 @@
-from ftplib import FTP
+from ftplib import FTP, all_errors
 import pandas as pd
 import os
 
@@ -8,6 +8,10 @@ class Vendor:
     NEW_FILE_NAME = ' - new'
 
     OUTPUT_FILE_EXT = '.csv'
+
+    CSV_FILE_EXT = '.csv'
+    XLS_FILE_EXT = '.xls'
+    XLSX_FILE_EXT = '.xlsx'
 
     RESULTS_FOLDER = 'Results'
     RESULTS_FILE_POST_FIX = ' - results'
@@ -33,14 +37,24 @@ class Vendor:
         self.__old_excel_file_exists = False
         self.__new_excel_file_exists = False
 
+        self.__new_ftp_file_exists = False
+
         self.__old_excel_file_data_frame = None
         self.__new_excel_file_data_frame = None
         self.__external_id_postfix = None
+
+        self.__source_ftp_url = None
+        self.__source_ftp_user = None
+        self.__source_ftp_pass = None
+        self.__source_ftp_port = None
+        self.__source_ftp_path = None
+        self.__source_ftp_filename = None
 
         self.__results_ftp_url = None
         self.__results_ftp_user = None
         self.__results_ftp_pass = None
         self.__results_ftp_port = None
+        self.__results_ftp_path = None
 
         self.__different_rows_indices = []
 
@@ -71,6 +85,42 @@ class Vendor:
     def set_new_excel_file_extension(self, new_excel_file_extension):
         self.__new_excel_file_extension = new_excel_file_extension
 
+    def get_source_ftp_url(self):
+        return self.__source_ftp_url
+
+    def set_source_ftp_url(self, source_ftp_url):
+        self.__source_ftp_url = source_ftp_url
+
+    def get_source_ftp_user(self):
+        return self.__source_ftp_user
+
+    def set_source_ftp_user(self, source_ftp_user):
+        self.__source_ftp_user = source_ftp_user
+
+    def get_source_ftp_pass(self):
+        return self.__source_ftp_pass
+
+    def set_source_ftp_pass(self, source_ftp_pass):
+        self.__source_ftp_pass = source_ftp_pass
+
+    def get_source_ftp_port(self):
+        return self.__source_ftp_port
+
+    def set_source_ftp_port(self, source_ftp_port):
+        self.__source_ftp_port = source_ftp_port
+
+    def get_source_ftp_path(self):
+        return self.__source_ftp_path
+
+    def set_source_ftp_path(self, source_ftp_path):
+        self.__source_ftp_path = source_ftp_path
+
+    def get_source_ftp_filename(self):
+        return self.__source_ftp_filename
+
+    def set_source_ftp_filename(self, source_ftp_filename):
+        self.__source_ftp_filename = source_ftp_filename
+
     def get_results_ftp_url(self):
         return self.__results_ftp_url
 
@@ -84,7 +134,7 @@ class Vendor:
         self.__results_ftp_user = results_ftp_user
 
     def get_results_ftp_pass(self):
-        return self._results_ftp_pass
+        return self.__results_ftp_pass
 
     def set_results_ftp_pass(self, results_ftp_pass):
         self.__results_ftp_pass = results_ftp_pass
@@ -94,6 +144,18 @@ class Vendor:
 
     def set_results_ftp_port(self, results_ftp_port):
         self.__results_ftp_port = results_ftp_port
+
+    def get_results_ftp_path(self):
+        return self.__results_ftp_path
+
+    def set_results_ftp_path(self, results_ftp_path):
+        self.__results_ftp_path = results_ftp_path
+
+    def get_new_ftp_file_exists(self):
+        return self.__new_ftp_file_exists
+
+    def set_new_ftp_file_exists(self, new_ftp_file_exists):
+        self.__new_ftp_file_exists = new_ftp_file_exists
 
     def get_name(self):
         return self.__name
@@ -133,10 +195,12 @@ class Vendor:
 
     def get_old_excel_file_path(self):
         self.__old_excel_file_path = f'./{self.__name}/{self.__name}{Vendor.OLD_FILE_NAME}{self.__old_excel_file_extension}'
+        print(self.__old_excel_file_path)
         return self.__old_excel_file_path
 
     def get_new_excel_file_path(self):
         self.__new_excel_file_path = f'./{self.__name}/{self.__name}{Vendor.NEW_FILE_NAME}{self.__new_excel_file_extension}'
+        print(self.__new_excel_file_path)
         return self.__new_excel_file_path
 
     def get_results_csv_file_path(self):
@@ -144,12 +208,19 @@ class Vendor:
         return self.__results_csv_file_path
 
     def read_old_excel_file(self, log):
-        log.info(f'Reading old {self.__name} data file sheet {self.__old_excel_file_sheet_name} at {self.__old_excel_file_path}')
+        log.info(
+            f'Reading {self.__name} - old data file sheet {self.__old_excel_file_sheet_name} at {self.__old_excel_file_path}')
         try:
-            self.__old_excel_file_data_frame = pd.read_excel(self.__old_excel_file_path,
-                                                             self.__old_excel_file_sheet_name)
-            self.__old_excel_file_exists = True
-            # print(self.__old_excel_file_data_frame)
+            if self.__old_excel_file_extension == Vendor.XLS_FILE_EXT or self.__old_excel_file_extension == Vendor.XLSX_FILE_EXT:
+                self.__old_excel_file_data_frame = pd.read_excel(self.__old_excel_file_path,
+                                                                 self.__old_excel_file_sheet_name)
+                self.__old_excel_file_exists = True
+            elif self.__old_excel_file_extension == Vendor.CSV_FILE_EXT:
+                print("ELIF")
+                print(self.__old_excel_file_path)
+                self.__old_excel_file_data_frame = pd.read_csv(self.__old_excel_file_path)
+                print(self.__old_excel_file_data_frame.shape)
+                self.__old_excel_file_exists = True
         except FileNotFoundError:
             log.error(
                 f'FileNotFoundError error occurred while reading {self.__name} - old excel file {self.__old_excel_file_sheet_name}')
@@ -166,10 +237,14 @@ class Vendor:
         log.info(
             f'Reading {self.__name} - new data file sheet {self.__new_excel_file_sheet_name} at {self.__new_excel_file_path}')
         try:
-            self.__new_excel_file_data_frame = pd.read_excel(self.__new_excel_file_path,
-                                                             self.__new_excel_file_sheet_name)
-            self.__new_excel_file_exists = True
-            # print(self.__new_excel_file_data_frame)
+            if self.__old_excel_file_extension == Vendor.XLS_FILE_EXT or self.__old_excel_file_extension == Vendor.XLSX_FILE_EXT:
+                self.__new_excel_file_data_frame = pd.read_excel(self.__new_excel_file_path,
+                                                                 self.__new_excel_file_sheet_name)
+                self.__new_excel_file_exists = True
+                # print(self.__new_excel_file_data_frame)
+            elif self.__old_excel_file_extension == Vendor.CSV_FILE_EXT:
+                self.__new_excel_file_data_frame = pd.read_csv(self.__new_excel_file_path)
+                self.__new_excel_file_exists = True
         except FileNotFoundError:
             log.error(
                 f'FileNotFoundError error occurred while reading {self.__name} - new excel file {self.__new_excel_file_sheet_name}')
@@ -183,21 +258,39 @@ class Vendor:
             log.error(f'Please install missing Python Libraries.')
 
     def compare_data_frames(self, log):
-        if(self.__old_excel_file_exists and self.__new_excel_file_exists):
+        if (self.__old_excel_file_exists and self.__new_excel_file_exists):
             columns = self.__new_excel_file_data_frame.columns
             self.__old_excel_file_data_frame['version'] = "Old"
             self.__new_excel_file_data_frame['version'] = "New"
-            combined_data_frame = pd.concat([self.__old_excel_file_data_frame, self.__new_excel_file_data_frame], ignore_index=True)
+            combined_data_frame = pd.concat([self.__old_excel_file_data_frame, self.__new_excel_file_data_frame],
+                                            ignore_index=True)
             final_data_frame = self.remove_duplicate_rows(combined_data_frame, columns)
 
             if self.__external_id_postfix is not None:
                 log.info('Postfix column is not empty, therefore adding an extra column for an external ID.')
-                final_data_frame['External ID'] = final_data_frame[self.__look_up] + '-' + self.__external_id_postfix
+                final_data_frame['External ID'] = str(
+                    final_data_frame[self.__look_up]) + '-' + self.__external_id_postfix
             else:
                 log.info('Postfix column is empty, therefore not adding an extra column for an external ID.')
             log.info(f'Saving CSV file for {self.__name} having {len(final_data_frame)} rows at {self.__results_csv_file_path}')
+
             final_data_frame.to_csv(self.__results_csv_file_path, index=False)
             self.upload_result_excel_file_to_ftp_server(log)
+
+            try:
+                log.info(f'Removing the old file from {self.__old_excel_file_path}.')
+                os.remove(self.__old_excel_file_path)
+                log.info(f'Removed the old file from {self.__old_excel_file_path}.')
+            except OSError as e:
+                log.info(f'Unable to remove old file from {self.__old_excel_file_path}, {e.strerror} occurred.')
+
+            try:
+                log.info(f'Renaming the new file at {self.__new_excel_file_path}.')
+                os.rename(self.__new_excel_file_path, self.__old_excel_file_path)
+                log.info(f'Renamed the new file at {self.__new_excel_file_path}.')
+            except OSError as e:
+                log.info(f'Unable to rename new file at {self.__new_excel_file_path}, {e.strerror} occurred.')
+
         else:
             log.error(f'Unable to compare the {self.__name} old and new excel files.')
 
@@ -212,10 +305,34 @@ class Vendor:
         duplicates = duplicates.drop(['version'], axis=1)
         return duplicates
 
+    def download_source_excel_file_from_ftp_server(self, log):
+        filename = f'{self.__source_ftp_filename}{self.__new_excel_file_extension}'
+        try:
+            ftp = FTP(self.__source_ftp_url)
+            ftp.login(user=self.__source_ftp_user, passwd=self.__source_ftp_pass)
+            ftp.cwd(self.__source_ftp_path)
+            with open(self.__new_excel_file_path, "wb") as file:
+                # use FTP's RETR command to download the file
+                ftp.retrbinary(f'RETR {filename}', file.write)
+            # file = open(self.__new_excel_file_path, 'wb')  # file to send
+            # ftp.retrbinary('RETR ' + filename, file.write)  # send the file
+            self.__new_ftp_file_exists = True
+            ftp.quit()
+        except all_errors as err:
+            self.__new_ftp_file_exists = False
+            log.error(f'Unable to download the new file {filename} from ftp {self.__source_ftp_url}.')
+
     def upload_result_excel_file_to_ftp_server(self, log):
-        ftp = FTP(self.__results_ftp_url)
-        ftp.login(user=self.__results_ftp_user, passwd=self.__results_ftp_pass)
-        ftp.cwd('/telquestftp.com/results/')
-        file = open(self.__results_csv_file_path, 'rb')  # file to send
-        ftp.storbinary('STOR ' + os.path.basename(file.name).strip(), file)  # send the file
-        ftp.quit()
+        try:
+            ftp = FTP(self.__results_ftp_url)
+            ftp.login(user=self.__results_ftp_user, passwd=self.__results_ftp_pass)
+            print(self.__results_ftp_path)
+            ftp.cwd(self.__results_ftp_path)
+            with open(self.__results_csv_file_path, 'rb') as file:
+                # use FTP's STOR command to upload the file
+                ftp.storbinary(f'STOR {os.path.basename(file.name).strip()}', file)
+            # file = open(self.__results_csv_file_path, 'rb')  # file to send
+            # ftp.storbinary('STOR ' + os.path.basename(file.name).strip(), file)  # send the file
+            ftp.quit()
+        except all_errors as err:
+            log.error(f'Unable to upload the results file {self.__results_csv_file_path} to ftp {self.__results_ftp_url}.')
