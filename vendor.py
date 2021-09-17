@@ -195,12 +195,10 @@ class Vendor:
 
     def get_old_excel_file_path(self):
         self.__old_excel_file_path = f'./{self.__name}/{self.__name}{Vendor.OLD_FILE_NAME}{self.__old_excel_file_extension}'
-        print(self.__old_excel_file_path)
         return self.__old_excel_file_path
 
     def get_new_excel_file_path(self):
         self.__new_excel_file_path = f'./{self.__name}/{self.__name}{Vendor.NEW_FILE_NAME}{self.__new_excel_file_extension}'
-        print(self.__new_excel_file_path)
         return self.__new_excel_file_path
 
     def get_results_csv_file_path(self):
@@ -216,17 +214,13 @@ class Vendor:
                                                                  self.__old_excel_file_sheet_name)
                 self.__old_excel_file_exists = True
             elif self.__old_excel_file_extension == Vendor.CSV_FILE_EXT:
-                print("ELIF")
-                print(self.__old_excel_file_path)
-                self.__old_excel_file_data_frame = pd.read_csv(self.__old_excel_file_path)
-                print(self.__old_excel_file_data_frame.shape)
+                self.__old_excel_file_data_frame = pd.read_csv(self.__old_excel_file_path, engine='python', encoding = 'unicode_escape')
                 self.__old_excel_file_exists = True
         except FileNotFoundError:
             log.error(
                 f'FileNotFoundError error occurred while reading {self.__name} - old excel file {self.__old_excel_file_sheet_name}')
-        except ValueError:
-            log.error(
-                f'ValueError error occurred while reading {self.__name} - old excel file sheet {self.__old_excel_file_sheet_name}')
+        except ValueError as v:
+            log.error(f'ValueError error occurred while reading {self.__name} - old excel file sheet {self.__old_excel_file_sheet_name}')
         except AttributeError:
             log.error(
                 f'AttributeError error occurred while reading {self.__name} - old excel file sheet {self.__old_excel_file_sheet_name}')
@@ -237,13 +231,12 @@ class Vendor:
         log.info(
             f'Reading {self.__name} - new data file sheet {self.__new_excel_file_sheet_name} at {self.__new_excel_file_path}')
         try:
-            if self.__old_excel_file_extension == Vendor.XLS_FILE_EXT or self.__old_excel_file_extension == Vendor.XLSX_FILE_EXT:
+            if self.__new_excel_file_extension == Vendor.XLS_FILE_EXT or self.__new_excel_file_extension == Vendor.XLSX_FILE_EXT:
                 self.__new_excel_file_data_frame = pd.read_excel(self.__new_excel_file_path,
                                                                  self.__new_excel_file_sheet_name)
                 self.__new_excel_file_exists = True
-                # print(self.__new_excel_file_data_frame)
-            elif self.__old_excel_file_extension == Vendor.CSV_FILE_EXT:
-                self.__new_excel_file_data_frame = pd.read_csv(self.__new_excel_file_path)
+            elif self.__new_excel_file_extension == Vendor.CSV_FILE_EXT:
+                self.__new_excel_file_data_frame = pd.read_csv(self.__new_excel_file_path, engine='python', encoding = 'unicode_escape')
                 self.__new_excel_file_exists = True
         except FileNotFoundError:
             log.error(
@@ -268,15 +261,13 @@ class Vendor:
 
             if self.__external_id_postfix is not None:
                 log.info('Postfix column is not empty, therefore adding an extra column for an external ID.')
-                final_data_frame['External ID'] = str(
-                    final_data_frame[self.__look_up]) + '-' + self.__external_id_postfix
+                final_data_frame['External ID'] =  final_data_frame.apply(lambda row: f'{row[self.__look_up]}-{self.__external_id_postfix}', axis=1)
             else:
                 log.info('Postfix column is empty, therefore not adding an extra column for an external ID.')
             log.info(f'Saving CSV file for {self.__name} having {len(final_data_frame)} rows at {self.__results_csv_file_path}')
 
             final_data_frame.to_csv(self.__results_csv_file_path, index=False)
             self.upload_result_excel_file_to_ftp_server(log)
-
             try:
                 log.info(f'Removing the old file from {self.__old_excel_file_path}.')
                 os.remove(self.__old_excel_file_path)
@@ -290,7 +281,6 @@ class Vendor:
                 log.info(f'Renamed the new file at {self.__new_excel_file_path}.')
             except OSError as e:
                 log.info(f'Unable to rename new file at {self.__new_excel_file_path}, {e.strerror} occurred.')
-
         else:
             log.error(f'Unable to compare the {self.__name} old and new excel files.')
 
@@ -326,7 +316,6 @@ class Vendor:
         try:
             ftp = FTP(self.__results_ftp_url)
             ftp.login(user=self.__results_ftp_user, passwd=self.__results_ftp_pass)
-            print(self.__results_ftp_path)
             ftp.cwd(self.__results_ftp_path)
             with open(self.__results_csv_file_path, 'rb') as file:
                 # use FTP's STOR command to upload the file
