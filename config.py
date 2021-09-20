@@ -10,12 +10,15 @@ class Config:
     STATUS = 'status'
     LOOKUP = 'lookup'
     CHANGES = 'changes'
+    LOCAL = 'local'
+    FTP = 'ftp'
     OLD_EXCEL_FILE_EXT = 'old file ext'
     NEW_EXCEL_FILE_EXT = 'new file ext'
     OLD_EXCEL_FILE_SHEET_NAME = 'old file sheet'
     NEW_EXCEL_FILE_SHEET_NAME = 'new file sheet'
     EXTERNAL_ID_POSTFIX = 'postfix'
 
+    SOURCE = 'source'
     SOURCE_FTP_URL = 'source ftp url'
     SOURCE_FTP_USER = 'source ftp user'
     SOURCE_FTP_PASS = 'source ftp pass'
@@ -97,47 +100,51 @@ class Config:
                     self.__columns.append(column)
                     i += 1
                     continue
-                elif i == 10 and column.lower() == Config.SOURCE_FTP_URL:
+                elif i == 10 and column.lower() == Config.SOURCE:
                     self.__columns.append(column)
                     i += 1
                     continue
-                elif i == 11 and column.lower() == Config.SOURCE_FTP_USER:
+                elif i == 11 and column.lower() == Config.SOURCE_FTP_URL:
                     self.__columns.append(column)
                     i += 1
                     continue
-                elif i == 12 and column.lower() == Config.SOURCE_FTP_PASS:
+                elif i == 12 and column.lower() == Config.SOURCE_FTP_USER:
                     self.__columns.append(column)
                     i += 1
                     continue
-                elif i == 13 and column.lower() == Config.SOURCE_FTP_PORT:
+                elif i == 13 and column.lower() == Config.SOURCE_FTP_PASS:
                     self.__columns.append(column)
                     i += 1
                     continue
-                elif i == 14 and column.lower() == Config.SOURCE_FTP_PATH:
+                elif i == 14 and column.lower() == Config.SOURCE_FTP_PORT:
                     self.__columns.append(column)
                     i += 1
                     continue
-                elif i == 15 and column.lower() == Config.SOURCE_FTP_FILENAME:
+                elif i == 15 and column.lower() == Config.SOURCE_FTP_PATH:
                     self.__columns.append(column)
                     i += 1
                     continue
-                elif i == 16 and column.lower() == Config.RESULTS_FTP_URL:
+                elif i == 16 and column.lower() == Config.SOURCE_FTP_FILENAME:
                     self.__columns.append(column)
                     i += 1
                     continue
-                elif i == 17 and column.lower() == Config.RESULTS_FTP_USER:
+                elif i == 17 and column.lower() == Config.RESULTS_FTP_URL:
                     self.__columns.append(column)
                     i += 1
                     continue
-                elif i == 18 and column.lower() == Config.RESULTS_FTP_PASS:
+                elif i == 18 and column.lower() == Config.RESULTS_FTP_USER:
                     self.__columns.append(column)
                     i += 1
                     continue
-                elif i == 19 and column.lower() == Config.RESULTS_FTP_PORT:
+                elif i == 19 and column.lower() == Config.RESULTS_FTP_PASS:
                     self.__columns.append(column)
                     i += 1
                     continue
-                elif i == 20 and column.lower() == Config.RESULTS_FTP_PATH:
+                elif i == 20 and column.lower() == Config.RESULTS_FTP_PORT:
+                    self.__columns.append(column)
+                    i += 1
+                    continue
+                elif i == 21 and column.lower() == Config.RESULTS_FTP_PATH:
                     self.__columns.append(column)
                     i += 1
                     continue
@@ -157,6 +164,7 @@ class Config:
                 if row[Config.EXTERNAL_ID_POSTFIX.title()] != '' and str(row[Config.EXTERNAL_ID_POSTFIX.title()]) != 'nan':
                     vendor.set_external_id_postfix(row[Config.EXTERNAL_ID_POSTFIX.title()])
 
+                vendor.set_source(row[Config.SOURCE.title()])
                 vendor.set_source_ftp_url(row[Config.SOURCE_FTP_URL.title()])
                 vendor.set_source_ftp_user(row[Config.SOURCE_FTP_USER.title()])
                 vendor.set_source_ftp_pass(row[Config.SOURCE_FTP_PASS.title()])
@@ -193,14 +201,19 @@ class Config:
                 vendor.get_old_excel_file_path()
                 vendor.get_new_excel_file_path()
                 vendor.get_results_csv_file_path()
-                vendor.download_source_excel_file_from_ftp_server(log)
 
-                if vendor.get_new_ftp_file_exists():
+                if vendor.get_source().lower() == Config.FTP:
+                    vendor.download_source_excel_file_from_ftp_server(log)
+                    if vendor.get_new_ftp_file_exists():
+                        vendor.read_old_excel_file(log)
+                        vendor.read_new_excel_file(log)
+                        vendor.compare_data_frames(log)
+                    else:
+                        log.info(f'Skipping comparing files process, because FTP file is not downloaded.')
+                elif vendor.get_source().lower() == Config.LOCAL:
                     vendor.read_old_excel_file(log)
                     vendor.read_new_excel_file(log)
                     vendor.compare_data_frames(log)
-                else:
-                    log.info(f'Skipping comparing files process, because FTP file is not downloaded.')
             else:
                 log.info(f'Skip processing the {vendor.get_name()} having lookup column {vendor.get_look_up()} and '
                          f'columns to be checked is/are {vendor.get_changes()}')

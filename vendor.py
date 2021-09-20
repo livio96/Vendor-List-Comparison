@@ -43,6 +43,7 @@ class Vendor:
         self.__new_excel_file_data_frame = None
         self.__external_id_postfix = None
 
+        self.__source = None
         self.__source_ftp_url = None
         self.__source_ftp_user = None
         self.__source_ftp_pass = None
@@ -90,6 +91,12 @@ class Vendor:
 
     def set_source_ftp_url(self, source_ftp_url):
         self.__source_ftp_url = source_ftp_url
+
+    def get_source(self):
+        return self.__source
+
+    def set_source(self, source):
+        self.__source = source
 
     def get_source_ftp_user(self):
         return self.__source_ftp_user
