@@ -266,7 +266,7 @@ class Vendor:
                                             ignore_index=True)
             final_data_frame = self.remove_duplicate_rows(combined_data_frame, columns)
 
-            if self.__external_id_postfix is not None:
+            if self.__external_id_postfix is not None and len(final_data_frame) > 0:
                 log.info('Postfix column is not empty, therefore adding an extra column for an external ID.')
                 final_data_frame['External ID'] =  final_data_frame.apply(lambda row: f'{row[self.__look_up]}-{self.__external_id_postfix}', axis=1)
             else:
