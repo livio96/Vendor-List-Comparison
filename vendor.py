@@ -17,12 +17,17 @@ class Vendor:
     RESULTS_FILE_POST_FIX = ' - results'
     ACTIVE = 'Active'
     IN_ACTIVE = 'Inactive'
+    NO = 'No'
 
     def __init__(self):
         self.__name = None
         self.__is_active = False
+        self.__is_custom_header = False
+        self.__custom_header = None
         self.__look_up = None
         self.__changes = []
+        self.__is_results = False
+        self.__results = []
 
         self.__old_excel_file_path = None
         self.__new_excel_file_path = None
@@ -179,6 +184,27 @@ class Vendor:
         elif is_active == Vendor.IN_ACTIVE:
             self.__is_active = False
 
+    def get_is_custom_header(self):
+        return self.__is_custom_header
+
+    def set_is_custom_header(self, is_custom_header):
+        if is_custom_header == Vendor.NO:
+            self.__is_custom_header = False
+        else:
+            self.__is_custom_header = True
+
+    def get_custom_header(self):
+        return self.__custom_header
+
+    def set_custom_header(self, custom_header):
+        if custom_header == Vendor.NO:
+            self.__is_custom_header = False
+            self.__custom_header = None
+        else:
+            custom_header = custom_header.replace(' ', '')
+            self.__is_custom_header = True
+            self.__custom_header = custom_header.split(';')
+
     def get_look_up(self):
         return self.__look_up
 
@@ -189,10 +215,31 @@ class Vendor:
         return self.__changes
 
     def set_changes(self, changes):
-        if changes.find(',') > -1:
-            self.__changes = changes.split(',')
+        if changes.find(';') > -1:
+            self.__changes = changes.split(';')
         else:
             self.__changes.append(changes)
+
+    def get_is_results(self):
+        return self.__is_results
+
+    def set_is_results(self, is_results):
+        if is_results == Vendor.NO:
+            self.__is_results = False
+        else:
+            self.__is_results = True
+
+    def get_results(self):
+        return self.__results
+
+    def set_results(self, results):
+        if results == Vendor.NO:
+            self.__is_results = False
+            self.__results = None
+        else:
+            results = results.replace(' ', '')
+            self.__is_results = True
+            self.__results = results.split(';')
 
     def get_external_id_postfix(self):
         return self.__external_id_postfix
@@ -217,17 +264,32 @@ class Vendor:
             f'Reading {self.__name} - old data file sheet {self.__old_excel_file_sheet_name} at {self.__old_excel_file_path}')
         try:
             if self.__old_excel_file_extension == Vendor.XLS_FILE_EXT or self.__old_excel_file_extension == Vendor.XLSX_FILE_EXT:
-                self.__old_excel_file_data_frame = pd.read_excel(self.__old_excel_file_path,
-                                                                 self.__old_excel_file_sheet_name)
+                if self.__is_custom_header:
+                    self.__old_excel_file_data_frame = pd.read_excel(self.__old_excel_file_path,
+                                                                     self.__old_excel_file_sheet_name,
+                                                                     header=None,
+                                                                     names=self.__custom_header)
+                else:
+                    self.__old_excel_file_data_frame = pd.read_excel(self.__old_excel_file_path,
+                                                                     self.__old_excel_file_sheet_name)
+
                 self.__old_excel_file_exists = True
             elif self.__old_excel_file_extension == Vendor.CSV_FILE_EXT:
-                self.__old_excel_file_data_frame = pd.read_csv(self.__old_excel_file_path, engine='python', encoding = 'unicode_escape')
+                if self.__is_custom_header:
+                    self.__old_excel_file_data_frame = pd.read_csv(self.__old_excel_file_path, engine='python',
+                                                                   encoding='unicode_escape',
+                                                                   header=None,
+                                                                   names=self.__custom_header)
+                else:
+                    self.__old_excel_file_data_frame = pd.read_csv(self.__old_excel_file_path, engine='python',
+                                                                   encoding='unicode_escape')
                 self.__old_excel_file_exists = True
         except FileNotFoundError:
             log.error(
                 f'FileNotFoundError error occurred while reading {self.__name} - old excel file {self.__old_excel_file_sheet_name}')
         except ValueError as v:
-            log.error(f'ValueError error occurred while reading {self.__name} - old excel file sheet {self.__old_excel_file_sheet_name}')
+            log.error(
+                f'ValueError error occurred while reading {self.__name} - old excel file sheet {self.__old_excel_file_sheet_name}')
         except AttributeError:
             log.error(
                 f'AttributeError error occurred while reading {self.__name} - old excel file sheet {self.__old_excel_file_sheet_name}')
@@ -239,11 +301,23 @@ class Vendor:
             f'Reading {self.__name} - new data file sheet {self.__new_excel_file_sheet_name} at {self.__new_excel_file_path}')
         try:
             if self.__new_excel_file_extension == Vendor.XLS_FILE_EXT or self.__new_excel_file_extension == Vendor.XLSX_FILE_EXT:
-                self.__new_excel_file_data_frame = pd.read_excel(self.__new_excel_file_path,
-                                                                 self.__new_excel_file_sheet_name)
+                if self.__is_custom_header:
+                    self.__new_excel_file_data_frame = pd.read_excel(self.__new_excel_file_path,
+                                                                     self.__new_excel_file_sheet_name,
+                                                                     header=None,
+                                                                     names=self.__custom_header)
+                else:
+                    self.__new_excel_file_data_frame = pd.read_excel(self.__new_excel_file_path,
+                                                                     self.__new_excel_file_sheet_name)
                 self.__new_excel_file_exists = True
             elif self.__new_excel_file_extension == Vendor.CSV_FILE_EXT:
-                self.__new_excel_file_data_frame = pd.read_csv(self.__new_excel_file_path, engine='python', encoding = 'unicode_escape')
+                if self.__is_custom_header:
+                    self.__new_excel_file_data_frame = pd.read_csv(self.__new_excel_file_path, engine='python',
+                                                                   encoding='unicode_escape', header=None,
+                                                                   names=self.__custom_header)
+                else:
+                    self.__new_excel_file_data_frame = pd.read_csv(self.__new_excel_file_path, engine='python',
+                                                                   encoding='unicode_escape')
                 self.__new_excel_file_exists = True
         except FileNotFoundError:
             log.error(
@@ -260,18 +334,50 @@ class Vendor:
     def compare_data_frames(self, log):
         if (self.__old_excel_file_exists and self.__new_excel_file_exists):
             columns = self.__new_excel_file_data_frame.columns
+
+            # Look for new added rows
+            temp_new = self.__new_excel_file_data_frame
+            temp_old = self.__old_excel_file_data_frame
+            key = [self.__look_up]
+            # set index
+            temp_old = temp_old.set_index(key)
+            temp_new = temp_new.set_index(key)
+            dropped_rows = set(temp_old.index) - set(temp_new.index)
+            added_rows = set(temp_new.index) - set(temp_old.index)
+
+            dropped = temp_old.loc[dropped_rows]
+            added = temp_new.loc[added_rows]
+
+            # added.index.name = None
+            # added[self.__look_up] = added.index
+
+            added.reset_index(level=0, inplace=True)
+            dropped.reset_index(level=0, inplace=True)
+            dropped = dropped.assign(**{col: '' for col in self.__changes})
+
             self.__old_excel_file_data_frame['version'] = "Old"
             self.__new_excel_file_data_frame['version'] = "New"
             combined_data_frame = pd.concat([self.__old_excel_file_data_frame, self.__new_excel_file_data_frame],
                                             ignore_index=True)
             final_data_frame = self.remove_duplicate_rows(combined_data_frame, columns)
 
+            if len(added) >= 1:
+                final_data_frame = pd.concat([final_data_frame, added], ignore_index=True)
+
+            if len(dropped) >= 1:
+                final_data_frame = pd.concat([final_data_frame, dropped], ignore_index=True)
+
+            if self.__is_results:
+                final_data_frame = final_data_frame[self.__results]
+                # final_data_frame = final_data_frame.filter(self.__results)
             if self.__external_id_postfix is not None and len(final_data_frame) > 0:
                 log.info('Postfix column is not empty, therefore adding an extra column for an external ID.')
-                final_data_frame['External ID'] =  final_data_frame.apply(lambda row: f'{row[self.__look_up]}-{self.__external_id_postfix}', axis=1)
+                final_data_frame['External ID'] = final_data_frame.apply(
+                    lambda row: f'{row[self.__look_up]}-{self.__external_id_postfix}', axis=1)
             else:
                 log.info('Postfix column is empty, therefore not adding an extra column for an external ID.')
-            log.info(f'Saving CSV file for {self.__name} having {len(final_data_frame)} rows at {self.__results_csv_file_path}')
+            log.info(
+                f'Saving CSV file for {self.__name} having {len(final_data_frame)} rows at {self.__results_csv_file_path}')
 
             final_data_frame.to_csv(self.__results_csv_file_path, index=False)
             self.upload_result_excel_file_to_ftp_server(log)
@@ -331,4 +437,5 @@ class Vendor:
             # ftp.storbinary('STOR ' + os.path.basename(file.name).strip(), file)  # send the file
             ftp.quit()
         except all_errors as err:
-            log.error(f'Unable to upload the results file {self.__results_csv_file_path} to ftp {self.__results_ftp_url}.')
+            log.error(
+                f'Unable to upload the results file {self.__results_csv_file_path} to ftp {self.__results_ftp_url}.')

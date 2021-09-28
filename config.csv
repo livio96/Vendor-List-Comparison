@@ -1,0 +1,2 @@
+Vendor,Status,Custom Header,Lookup,Changes,Results,Old File Ext,New File Ext,Old File Sheet,New File Sheet,Postfix,Source,Source Ftp Url,Source Ftp User,Source Ftp Pass,Source Ftp Port,Source Ftp Path,Source Ftp Filename,Results Ftp Url,Results Ftp User,Results Ftp Pass,Results Ftp Port,Results Ftp Path
+Synnex,Active,Part;Quantity;Price,Part,Quantity,Part;Quantity,.csv,.csv,Sheet1,Sheet1,,Local,ftp.jenne.com,TE07004,QQJjd2345,21,/,pricing,telquestftp.com,admin@telquestftp.com,Shopping2016#,21,/

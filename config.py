@@ -8,8 +8,10 @@ from vendor import Vendor
 class Config:
     VENDOR = 'vendor'
     STATUS = 'status'
+    CUSTOM_HEADER = 'custom header'
     LOOKUP = 'lookup'
     CHANGES = 'changes'
+    RESULTS = 'results'
     LOCAL = 'local'
     FTP = 'ftp'
     OLD_EXCEL_FILE_EXT = 'old file ext'
@@ -61,7 +63,11 @@ class Config:
         log.info(f'Start.....')
         log.info(f'Reading config file sheet {self.__sheet_name} of {self.__name}')
         try:
-            self.__config_data_frame = pd.read_excel(self.__name, self.__sheet_name)
+            # For XLXS Config File
+            # self.__config_data_frame = pd.read_excel(self.__name, self.__sheet_name)
+
+            # For CSV Config File
+            self.__config_data_frame = pd.read_csv(self.__name, engine='python', encoding='unicode_escape')
             i = 1
             for column in self.__config_data_frame.columns:
                 if i == 1 and column.lower() == Config.VENDOR:
@@ -72,91 +78,100 @@ class Config:
                     self.__columns.append(column)
                     i += 1
                     continue
-                elif i == 3 and column.lower() == Config.LOOKUP:
+                elif i == 3 and column.lower() == Config.CUSTOM_HEADER:
                     self.__columns.append(column)
                     i += 1
                     continue
-                elif i == 4 and column.lower() == Config.CHANGES:
+                elif i == 4 and column.lower() == Config.LOOKUP:
                     self.__columns.append(column)
                     i += 1
                     continue
-                elif i == 5 and column.lower() == Config.OLD_EXCEL_FILE_EXT:
+                elif i == 5 and column.lower() == Config.CHANGES:
                     self.__columns.append(column)
                     i += 1
                     continue
-                elif i == 6 and column.lower() == Config.NEW_EXCEL_FILE_EXT:
+                elif i == 6 and column.lower() == Config.RESULTS:
                     self.__columns.append(column)
                     i += 1
                     continue
-                elif i == 7 and column.lower() == Config.OLD_EXCEL_FILE_SHEET_NAME:
+                elif i == 7 and column.lower() == Config.OLD_EXCEL_FILE_EXT:
                     self.__columns.append(column)
                     i += 1
                     continue
-                elif i == 8 and column.lower() == Config.NEW_EXCEL_FILE_SHEET_NAME:
+                elif i == 8 and column.lower() == Config.NEW_EXCEL_FILE_EXT:
                     self.__columns.append(column)
                     i += 1
                     continue
-                elif i == 9 and column.lower() == Config.EXTERNAL_ID_POSTFIX:
+                elif i == 9 and column.lower() == Config.OLD_EXCEL_FILE_SHEET_NAME:
                     self.__columns.append(column)
                     i += 1
                     continue
-                elif i == 10 and column.lower() == Config.SOURCE:
+                elif i == 10 and column.lower() == Config.NEW_EXCEL_FILE_SHEET_NAME:
                     self.__columns.append(column)
                     i += 1
                     continue
-                elif i == 11 and column.lower() == Config.SOURCE_FTP_URL:
+                elif i == 11 and column.lower() == Config.EXTERNAL_ID_POSTFIX:
                     self.__columns.append(column)
                     i += 1
                     continue
-                elif i == 12 and column.lower() == Config.SOURCE_FTP_USER:
+                elif i == 12 and column.lower() == Config.SOURCE:
                     self.__columns.append(column)
                     i += 1
                     continue
-                elif i == 13 and column.lower() == Config.SOURCE_FTP_PASS:
+                elif i == 13 and column.lower() == Config.SOURCE_FTP_URL:
                     self.__columns.append(column)
                     i += 1
                     continue
-                elif i == 14 and column.lower() == Config.SOURCE_FTP_PORT:
+                elif i == 14 and column.lower() == Config.SOURCE_FTP_USER:
                     self.__columns.append(column)
                     i += 1
                     continue
-                elif i == 15 and column.lower() == Config.SOURCE_FTP_PATH:
+                elif i == 15 and column.lower() == Config.SOURCE_FTP_PASS:
                     self.__columns.append(column)
                     i += 1
                     continue
-                elif i == 16 and column.lower() == Config.SOURCE_FTP_FILENAME:
+                elif i == 16 and column.lower() == Config.SOURCE_FTP_PORT:
                     self.__columns.append(column)
                     i += 1
                     continue
-                elif i == 17 and column.lower() == Config.RESULTS_FTP_URL:
+                elif i == 17 and column.lower() == Config.SOURCE_FTP_PATH:
                     self.__columns.append(column)
                     i += 1
                     continue
-                elif i == 18 and column.lower() == Config.RESULTS_FTP_USER:
+                elif i == 18 and column.lower() == Config.SOURCE_FTP_FILENAME:
                     self.__columns.append(column)
                     i += 1
                     continue
-                elif i == 19 and column.lower() == Config.RESULTS_FTP_PASS:
+                elif i == 19 and column.lower() == Config.RESULTS_FTP_URL:
                     self.__columns.append(column)
                     i += 1
                     continue
-                elif i == 20 and column.lower() == Config.RESULTS_FTP_PORT:
+                elif i == 20 and column.lower() == Config.RESULTS_FTP_USER:
                     self.__columns.append(column)
                     i += 1
                     continue
-                elif i == 21 and column.lower() == Config.RESULTS_FTP_PATH:
+                elif i == 21 and column.lower() == Config.RESULTS_FTP_PASS:
+                    self.__columns.append(column)
+                    i += 1
+                    continue
+                elif i == 22 and column.lower() == Config.RESULTS_FTP_PORT:
+                    self.__columns.append(column)
+                    i += 1
+                    continue
+                elif i == 23 and column.lower() == Config.RESULTS_FTP_PATH:
                     self.__columns.append(column)
                     i += 1
                     continue
                 else:
                     log.error(f'{self.__name} columns order should be Vendor, Status, Lookup, Changes, Old File Ext, New File Ext, Old File Sheet, New File Sheet, Postfix')
-
             for index, row in self.__config_data_frame.iterrows():
                 vendor = Vendor()
                 vendor.set_name(row[Config.VENDOR.title()])
                 vendor.set_is_active(row[Config.STATUS.title()])
+                vendor.set_custom_header(row[Config.CUSTOM_HEADER.title()])
                 vendor.set_look_up(row[Config.LOOKUP.title()])
                 vendor.set_changes(row[Config.CHANGES.title()])
+                vendor.set_results(row[Config.RESULTS.title()])
                 vendor.set_old_excel_file_extension(row[Config.OLD_EXCEL_FILE_EXT.title()])
                 vendor.set_new_excel_file_extension(row[Config.NEW_EXCEL_FILE_EXT.title()])
                 vendor.set_old_excel_file_sheet_name(row[Config.OLD_EXCEL_FILE_SHEET_NAME.title()])
