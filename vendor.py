@@ -201,7 +201,7 @@ class Vendor:
             self.__is_custom_header = False
             self.__custom_header = None
         else:
-            custom_header = custom_header.replace(' ', '')
+            #custom_header = custom_header.replace(' ', '')
             self.__is_custom_header = True
             self.__custom_header = custom_header.split(';')
 
@@ -237,7 +237,7 @@ class Vendor:
             self.__is_results = False
             self.__results = None
         else:
-            results = results.replace(' ', '')
+            #results = results.replace(' ', '')
             self.__is_results = True
             self.__results = results.split(';')
 
@@ -366,6 +366,9 @@ class Vendor:
 
             if len(dropped) >= 1:
                 final_data_frame = pd.concat([final_data_frame, dropped], ignore_index=True)
+
+            print(final_data_frame)
+            print(self.__results)
 
             if self.__is_results:
                 final_data_frame = final_data_frame[self.__results]
