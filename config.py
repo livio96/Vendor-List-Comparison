@@ -1,3 +1,4 @@
+from ftplib import FTP, all_errors
 import pandas as pd
 import logging as log
 
@@ -33,7 +34,6 @@ class Config:
     RESULTS_FTP_PASS = 'results ftp pass'
     RESULTS_FTP_PORT = 'results ftp port'
     RESULTS_FTP_PATH = 'results ftp path'
-
     LOG_FILE_NAME = './Logs/' + datetime.now().strftime('Logs_%Y_%m_%d_%H_%M_%S.log')
 
     def __init__(self, name, sheet_name):
@@ -42,6 +42,8 @@ class Config:
         self.__config_data_frame = None
         self.__columns = []
         self.__vendors = []
+        self.__vendors = []
+        self.__config_file_downloaded = False
         log.basicConfig(filename=Config.LOG_FILE_NAME, format='%(asctime)s : %(message)s', filemode='w', level=log.INFO)
 
     def __str__(self):
@@ -60,8 +62,8 @@ class Config:
         self.__sheet_name = sheet_name
 
     def read_config_file(self):
-        log.info(f'Start.....')
-        log.info(f'Reading config file sheet {self.__sheet_name} of {self.__name}')
+        if not self.__config_file_downloaded:
+            log.info(f'Start.....')
         try:
             # For XLXS Config File
             # self.__config_data_frame = pd.read_excel(self.__name, self.__sheet_name)
@@ -69,6 +71,7 @@ class Config:
             # For CSV Config File
             self.__config_data_frame = pd.read_csv(self.__name, engine='python', encoding='unicode_escape')
             i = 1
+            log.info(f'Reading config file sheet {self.__sheet_name} of {self.__name}')
             for column in self.__config_data_frame.columns:
                 if i == 1 and column.lower() == Config.VENDOR:
                     self.__columns.append(column)
@@ -198,8 +201,12 @@ class Config:
 
             log.info(f'{len(self.__vendors)} row(s) found in {self.__name}, [{vendors_str}]')
         except FileNotFoundError:
-            log.error(f'FileNotFoundError error occurred while reading config file {self.__name}')
-        except ValueError:
+            if not self.__config_file_downloaded:
+                self.downloadConfigFileFromFTP()
+            else:
+                log.error(f'FileNotFoundError error occurred while reading config file {self.__name}')
+        except ValueError as v:
+            print(v)
             log.error(f'ValueError error occurred while reading config file sheet {self.__sheet_name}')
         except AttributeError:
             log.error(
@@ -233,3 +240,27 @@ class Config:
                 log.info(f'Skip processing the {vendor.get_name()} having lookup column {vendor.get_look_up()} and '
                          f'columns to be checked is/are {vendor.get_changes()}')
         log.info(f'End.....')
+
+    def downloadConfigFileFromFTP(self):
+        host = 'telquestftp.com'
+        username = 'admin@telquestftp.com'
+        password = 'Shopping2016#'
+        filename = 'config.csv'
+        local_path = f'./{filename}'
+        log.info(f'Downloading the config file {filename} from {host} FTP.')
+        try:
+            ftp = FTP(host)
+            ftp.login(username, passwd=password)
+            ftp.cwd('/')
+            with open(local_path, "wb") as file:
+                # use FTP's RETR command to download the file
+                ftp.retrbinary(f'RETR {filename}', file.write)
+                log.info(f'Config file {filename} download from {host} FTP and saved locally.')
+            # file = open(self.__new_excel_file_path, 'wb')  # file to send
+            # ftp.retrbinary('RETR ' + filename, file.write)  # send the file
+            self.__config_file_downloaded = True
+            ftp.quit()
+            self.read_config_file()
+        except all_errors as err:
+            self.__config_file_downloaded = False
+            log.error(f'Unable to download the config file {filename} from {host} FTP.')
